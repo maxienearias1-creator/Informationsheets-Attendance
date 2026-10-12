@@ -61,53 +61,58 @@
             border-radius: 8px;
             margin-bottom: 20px;
         }
-        .user-card h3 { margin: 0 0 5px 0; color: #004085; }
-        .reset-btn {
-            background: transparent;
-            color: #d9534f;
-            border: none;
-            text-decoration: underline;
-            font-size: 12px;
-            cursor: pointer;
-            margin-top: 15px;
+        .completed-box {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            padding: 20px;
+            border-radius: 8px;
         }
+        .completed-box h3 { margin-top: 0; }
     </style>
 </head>
 <body>
 
 <div class="container">
 
-    <!-- FIRST-TIME USERS FORM -->
+    <!-- VIEW 1: FIRST-TIME REGISTRATION -->
     <div id="register-section" class="hidden">
         <h2>First-Time Registration</h2>
-        <p>Please enter your information once. Next time you scan, this step will be skipped automatically.</p>
+        <p>Please enter your information once to register your device.</p>
         
         <form id="info-form">
             <div class="form-group">
                 <label for="fullName">Full Name</label>
-                <input type="text" id="fullName" placeholder="e.g. Juan Dela Cruz" required>
+                <input type="text" id="fullName" placeholder="e.g. Maria Santos" required>
             </div>
             <div class="form-group">
                 <label for="idNumber">ID / Member Number</label>
-                <input type="text" id="idNumber" placeholder="e.g. 2026-1002" required>
+                <input type="text" id="idNumber" placeholder="e.g. 2026-8899" required>
             </div>
             <button type="submit">Save & Proceed to Attendance</button>
         </form>
     </div>
 
-    <!-- RETURNING USERS ATTENDANCE BUTTON -->
+    <!-- VIEW 2: ONE-TIME ATTENDANCE SUBMISSION -->
     <div id="attendance-section" class="hidden">
         <div class="user-card">
-            <h3 id="welcome-name">Welcome Back!</h3>
+            <h3 id="welcome-name">Welcome!</h3>
             <p id="welcome-id" style="margin:0; font-size:13px; color:#555;"></p>
         </div>
 
         <h2>Attendance Check-In</h2>
-        <p>Your details are verified. Tap below to log your attendance.</p>
+        <p>Tap below to log your attendance for today.</p>
 
         <button id="mark-attendance-btn" onclick="submitAttendance()">Mark Me Present</button>
+    </div>
 
-        <button class="reset-btn" onclick="resetUser()">Not you? Change registration info</button>
+    <!-- VIEW 3: LOCKED / COMPLETED STATE -->
+    <div id="completed-section" class="hidden">
+        <div class="completed-box">
+            <h3>✓ Attendance Already Submitted</h3>
+            <p id="completed-details"></p>
+            <p>You have already checked in. Multiple submissions are not allowed on this device.</p>
+        </div>
     </div>
 
 </div>
@@ -122,16 +127,30 @@
     function checkUserStatus() {
         const savedName = localStorage.getItem("attendee_name");
         const savedID = localStorage.getItem("attendee_id");
+        const submitted = localStorage.getItem("attendance_submitted");
 
+        // IF ALREADY SUBMITTED: Hide forms and show locked screen
+        if (submitted === "true") {
+            document.getElementById("register-section").classList.add("hidden");
+            document.getElementById("attendance-section").classList.add("hidden");
+            document.getElementById("completed-section").classList.remove("hidden");
+            document.getElementById("completed-details").innerText = "Attendee: " + savedName + " (" + savedID + ")";
+            return;
+        }
+
+        // IF REGISTERED BUT NOT YET SUBMITTED: Show Mark Present screen
         if (savedName && savedID) {
             document.getElementById("register-section").classList.add("hidden");
             document.getElementById("attendance-section").classList.remove("hidden");
+            document.getElementById("completed-section").classList.add("hidden");
             
-            document.getElementById("welcome-name").innerText = "Welcome back, " + savedName + "!";
+            document.getElementById("welcome-name").innerText = "Welcome, " + savedName + "!";
             document.getElementById("welcome-id").innerText = "ID: " + savedID;
         } else {
+            // NEW USER: Show Registration Form
             document.getElementById("register-section").classList.remove("hidden");
             document.getElementById("attendance-section").classList.add("hidden");
+            document.getElementById("completed-section").classList.add("hidden");
         }
     }
 
@@ -148,15 +167,11 @@
     });
 
     function submitAttendance() {
+        // Lock this device permanently
+        localStorage.setItem("attendance_submitted", "true");
+        
+        // Redirect to Google Form or update view
         window.location.href = GOOGLE_FORM_URL;
-    }
-
-    function resetUser() {
-        if (confirm("Are you sure you want to clear saved information on this device?")) {
-            localStorage.removeItem("attendee_name");
-            localStorage.removeItem("attendee_id");
-            checkUserStatus();
-        }
     }
 </script>
 
